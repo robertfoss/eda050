@@ -176,6 +176,38 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	 * 
 	 * 
 	 */
+	
+	list_t* path;
+	list_t* end;
+	char* cmd;
+	
+	cmd = argv[0];
+	path = end = path_dir_list;
+	end = end->pred;
+	while(path != NULL && path != end){
+		char* s1 = path->data;
+		int l = strlen(s1) + strlen(cmd) + 1;
+		char* res = malloc(l);
+		int x = snprintf(res, l, "%s%s", s1,cmd);
+		if(x == 0) {
+			fprintf(stderr, "derp, string concat overflow\n");
+			exit(1);
+		}
+		printf("Checking: %s\n", res);
+		if(access(res, X_OK) == 0){
+			int pid = fork();
+			if(pid != 0){
+				return;
+			} else {
+				execv(res, argv);
+				fprintf(stderr, "execv returned!!!\n");
+				exit(1);
+			}
+		}
+		path = path->succ;
+	}
+	fprintf(stderr, "Command not found: %s\n", cmd);
+	exit(1);
 }
 
 void parse_line(void)
