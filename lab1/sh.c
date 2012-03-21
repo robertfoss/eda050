@@ -158,6 +158,7 @@ void error(char *fmt, ...)
 
 }
 
+
 /* run_program: fork and exec a program. */
 void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 {
@@ -181,6 +182,14 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	list_t* end;
 	char* cmd;
 	
+	pid_t pid;
+	pid = fork();
+	if(pid != 0){
+		if(foreground)
+			waitpid(pid, NULL, 0);
+		return;
+	}
+
 	cmd = argv[0];
 	path = end = path_dir_list;
 	if(path != NULL) do {
@@ -194,19 +203,10 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 		}
 	//	printf("Checking: %s\n", res);
 		if(access(res, X_OK) == 0){
-			// Set up io, doing pipe?
-			if(foreground){
-				int pid = fork();
-				if(pid == 0){
-					execv(res, argv);
-					fprintf(stderr, "execv returned!!!\n");
-					exit(1);
-				} else {
-					return;
-				}
-			} else {
-				execv(res, argv);
-			}
+			dup2(0,1);
+			execv(res, argv);
+			fprintf(stderr, "execv returned!!!\n");
+			exit(1);
 		}
 		path = path->succ;
 	} while(path != end);
