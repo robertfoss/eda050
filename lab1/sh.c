@@ -278,7 +278,6 @@ void parse_line(void)
 			break;
 
 		case PIPE:
-			receiving_pipe = false;
 			doing_pipe = true;
 			
 			if (pipe(pipe_fd) < 0){
@@ -306,6 +305,7 @@ void parse_line(void)
 
 			if(receiving_pipe){
 				input_fd = pipe_fd[0];
+				receiving_pipe = false;
 			}
 			if(doing_pipe){
 				receiving_pipe = true;
