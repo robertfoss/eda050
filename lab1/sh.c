@@ -195,6 +195,14 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	if(doing_pipe){
 //		dup2(output_fd, input_fd);
 	}
+	fprintf(stdout,"input_fd: %d\noutput_fd: %d\n", input_fd, output_fd);
+	if(output_fd > 0)
+		/*close(1);*/
+		dup2(output_fd, 1);
+
+	if(input_fd > 0)
+		/*close(0);*/
+		dup2(input_fd, 0);
 
 	cmd = argv[0];
 	path = end = path_dir_list;
