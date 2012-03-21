@@ -218,10 +218,13 @@ void parse_line(void)
 	token_type_t	type;
 	bool		foreground;
 	bool		doing_pipe;
+	bool		receiving_pipe;
+
 
 	input_fd	= 0;
 	output_fd	= 0;
 	argc		= 0;
+	receiving_pipe = true:
 
 	for (;;) {
 			
@@ -265,8 +268,16 @@ void parse_line(void)
 			break;
 
 		case PIPE:
+			receiving_pipe = false;
 			doing_pipe = true;
-
+			
+			if (pipe(pipe_fs) < 0){
+				fprintf("unable to create pipe filedescriptors");
+				exit(1);
+			}
+			
+			output_fd = pipe_fd[1]; /* 1 for producer and 0 for consumer. */
+	
 			/*FALLTHROUGH*/
 
 		case AMPERSAND:
@@ -282,6 +293,14 @@ void parse_line(void)
 						
 			argv[argc] = NULL;
 
+
+			if(receiving_pipe){
+				input_fd = pipe_fd[0];
+			}
+			if(doing_pipe){
+				receiving_pipe = true;
+			}
+				
 			run_program(argv, argc, foreground, doing_pipe);
 
 			input_fd	= 0;
