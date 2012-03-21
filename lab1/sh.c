@@ -193,7 +193,7 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	} 
 
 	if(doing_pipe){
-		// ?!?!?!!?	
+		/* ?!?!?!!?	*/
 	}
 
 	cmd = argv[0];
@@ -207,7 +207,7 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 			fprintf(stderr, "derp, string concat overflow\n");
 			exit(1);
 		}
-	//	printf("Checking: %s\n", res);
+	/*	printf("Checking: %s\n", res); */
 		if(access(res, X_OK) == 0){
 			execv(res, argv);
 			fprintf(stderr, "execv returned!!!\n");
@@ -234,7 +234,7 @@ void parse_line(void)
 	input_fd	= 0;
 	output_fd	= 0;
 	argc		= 0;
-	receiving_pipe = true:
+	receiving_pipe = true;
 
 	for (;;) {
 			
@@ -281,8 +281,8 @@ void parse_line(void)
 			receiving_pipe = false;
 			doing_pipe = true;
 			
-			if (pipe(pipe_fs) < 0){
-				fprintf("unable to create pipe filedescriptors");
+			if (pipe(pipe_fd) < 0){
+				error("error: unable to create pipe filedescriptors", NULL);
 				exit(1);
 			}
 			
