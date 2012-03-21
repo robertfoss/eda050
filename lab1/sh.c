@@ -187,7 +187,13 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	if(pid != 0){
 		if(foreground)
 			waitpid(pid, NULL, 0);
+		else
+			printf("[%d]\n", pid);
 		return;
+	} 
+
+	if(doing_pipe){
+		// ?!?!?!!?	
 	}
 
 	cmd = argv[0];
@@ -203,7 +209,6 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 		}
 	//	printf("Checking: %s\n", res);
 		if(access(res, X_OK) == 0){
-			dup2(0,1);
 			execv(res, argv);
 			fprintf(stderr, "execv returned!!!\n");
 			exit(1);
