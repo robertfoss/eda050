@@ -193,7 +193,7 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	} 
 
 	if(doing_pipe){
-		/* ?!?!?!!?	*/
+		dup2(output_fd, input_fd);
 	}
 
 	cmd = argv[0];
