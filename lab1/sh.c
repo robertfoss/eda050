@@ -185,24 +185,16 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	pid_t pid;
 	pid = fork();
 	if(pid != 0){
-		if(foreground)
+		if(foreground && !doing_pipe)
 			waitpid(pid, NULL, 0);
-		else
+		else if(foreground)
 			printf("[%d]\n", pid);
 		return;
 	} 
 
-	if(doing_pipe){
-//		dup2(output_fd, input_fd);
-	}
-	fprintf(stdout,"input_fd: %d\noutput_fd: %d\n", input_fd, output_fd);
-	if(output_fd > 0)
-		/*close(1);*/
-		dup2(output_fd, 1);
-
-	if(input_fd > 0)
-		/*close(0);*/
-		dup2(input_fd, 0);
+	//fprintf(stdout,"input_fd: %d\noutput_fd: %d\n", input_fd, output_fd);
+	dup2(output_fd, 1);
+	dup2(input_fd, 0);
 
 	cmd = argv[0];
 	path = end = path_dir_list;
@@ -240,9 +232,8 @@ void parse_line(void)
 
 
 	input_fd	= 0;
-	output_fd	= 0;
+	output_fd	= 1;
 	argc		= 0;
-	receiving_pipe = true;
 
 	for (;;) {
 			
@@ -309,21 +300,18 @@ void parse_line(void)
 				return;
 						
 			argv[argc] = NULL;
-
-
-			if(receiving_pipe){
-				input_fd = pipe_fd[0];
-				receiving_pipe = false;
-			}
-			if(doing_pipe){
-				receiving_pipe = true;
-			}
 				
 			run_program(argv, argc, foreground, doing_pipe);
 
+			
 			input_fd	= 0;
-			output_fd	= 0;
+			output_fd	= 1;
 			argc		= 0;
+			
+			if(doing_pipe){
+				input_fd = pipe_fd[0];
+				close(pipe_fd[1]);
+			}
 
 			if (type == NEWLINE)
 				return;
