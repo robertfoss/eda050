@@ -158,6 +158,7 @@ void error(char *fmt, ...)
 
 }
 
+
 /* run_program: fork and exec a program. */
 void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 {
@@ -181,31 +182,40 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	list_t* end;
 	char* cmd;
 	
+	pid_t pid;
+	pid = fork();
+	if(pid != 0){
+		if(foreground)
+			waitpid(pid, NULL, 0);
+		else
+			printf("[%d]\n", pid);
+		return;
+	} 
+
+	if(doing_pipe){
+		// ?!?!?!!?	
+	}
+
 	cmd = argv[0];
 	path = end = path_dir_list;
-	end = end->pred;
-	while(path != NULL && path != end){
+	if(path != NULL) do {
 		char* s1 = path->data;
-		int l = strlen(s1) + strlen(cmd) + 1;
+		int l = strlen(s1) + strlen(cmd) + 2;
 		char* res = malloc(l);
-		int x = snprintf(res, l, "%s%s", s1,cmd);
+		int x = snprintf(res, l, "%s/%s", s1,cmd);
 		if(x == 0) {
 			fprintf(stderr, "derp, string concat overflow\n");
 			exit(1);
 		}
-		printf("Checking: %s\n", res);
+	//	printf("Checking: %s\n", res);
 		if(access(res, X_OK) == 0){
-			int pid = fork();
-			if(pid != 0){
-				return;
-			} else {
-				execv(res, argv);
-				fprintf(stderr, "execv returned!!!\n");
-				exit(1);
-			}
+			execv(res, argv);
+			fprintf(stderr, "execv returned!!!\n");
+			exit(1);
 		}
 		path = path->succ;
-	}
+	} while(path != end);
+
 	fprintf(stderr, "Command not found: %s\n", cmd);
 	exit(1);
 }
