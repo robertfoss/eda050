@@ -181,18 +181,23 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	list_t* path;
 	list_t* end;
 	char* cmd;
+	int status;
 	
 	pid_t pid;
 	pid = fork();
 	if(pid != 0){
-		if(foreground && !doing_pipe)
-			waitpid(pid, NULL, 0);
-		else if(foreground)
+		if(foreground && !doing_pipe){
+			waitpid(pid, &status, 0);
+			printf("[%d] - Exit: %d\n", pid, status);
+		}else if(!foreground){
 			printf("[%d]\n", pid);
+			wait(&status);
+			printf("[%d] - Exit: %d\n", pid, status);
+		}
 		return;
 	} 
 
-	//fprintf(stdout,"input_fd: %d\noutput_fd: %d\n", input_fd, output_fd);
+
 	dup2(output_fd, 1);
 	dup2(input_fd, 0);
 
@@ -207,7 +212,7 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 			fprintf(stderr, "derp, string concat overflow\n");
 			exit(1);
 		}
-	/*	printf("Checking: %s\n", res); */
+
 		if(access(res, X_OK) == 0){
 			execv(res, argv);
 			fprintf(stderr, "execv returned!!!\n");
@@ -228,7 +233,6 @@ void parse_line(void)
 	token_type_t	type;
 	bool		foreground;
 	bool		doing_pipe;
-	bool		receiving_pipe;
 
 
 	input_fd	= 0;

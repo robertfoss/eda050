@@ -1,6 +1,6 @@
 CC		= gcc
 
-CFLAGS		= -g -Wall -pedantic
+CFLAGS		= -g -Wall -pedantic -C99
 
 LDFLAGS		= -g
 
