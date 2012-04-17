@@ -188,11 +188,11 @@ void run_program(char** argv, int argc, bool foreground, bool doing_pipe)
 	if(pid != 0){
 		if(foreground && !doing_pipe){
 			waitpid(pid, &status, 0);
-			printf("[%d] - Exit: %d\n", pid, status);
-		}else if(!foreground){
+//			printf("[%d] - Exit: %d\n", pid, status);
+		}else if(!doing_pipe){
 			printf("[%d]\n", pid);
-			wait(&status);
-			printf("[%d] - Exit: %d\n", pid, status);
+//			wait(&status);
+//			printf("[%d] - Exit: %d\n", pid, status);
 		}
 		return;
 	} 

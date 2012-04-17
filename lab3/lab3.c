@@ -73,12 +73,9 @@ typedef struct {
 	unsigned		page;	/* Swap page of page if assigned. */
 } coremap_entry_t;
 
-typedef struct {
-	unsigned x;
-	list_t next;
-} list_t;
 
-static list_t*			fifolist;
+static int			corecounter = 0;
+static int			swapcounter = 0;
 static unsigned long long	num_pagefault;		/* Statistics. */
 static page_table_entry_t	page_table[NPAGES];	/* OS data structure. */
 static coremap_entry_t		coremap[RAM_PAGES];	/* OS data structure. */
@@ -86,11 +83,6 @@ static unsigned			memory[RAM_SIZE];	/* Hardware: RAM. */
 static unsigned			swap[SWAP_SIZE];	/* Hardware: disk. */
 static unsigned			(*replace)(void);	/* Page repl. alg. */
 
-list_t* make_list(){
-	list_t* l = (list_t*) malloc(sizeof(list_t));
-	l.x = 0;
-	l.next = 0;
-}
 
 unsigned make_instr(unsigned opcode, unsigned dest, unsigned s1, unsigned s2)
 {
@@ -155,12 +147,21 @@ static unsigned fifo_page_replace()
 {
 	unsigned	page;
 	list_t*		f;
+
+	if(corecounter < RAM_PAGES){
+		coremap_entry_t* c = (coremap_entry_t*) malloc(sizeof(coremap_entry_t));
+		page = new_swap_page();
+		c->page = page;
+		c->owner = pagetable[c->page];
+		coremap[swapcounter] = c;
+		corecounter++;		
+	} else {
+		page = coremap[swapcounter].page; 
+	}
+	// Sätt i page_table_enty för coremap[page].owner att page nu finns i ram ist. för på disk.
 	
-	page = *fifolist.x; 
-	f = fifolist;	
-	fifolist = *fifolist.next;
-	free(f);
 	
+	swapcounter = (swapcounter+1)%RAM_PAGES;
 	// Ge tillbaka den som kom till swapen först
 
 	assert(page < RAM_PAGES);
