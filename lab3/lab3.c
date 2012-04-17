@@ -73,12 +73,24 @@ typedef struct {
 	unsigned		page;	/* Swap page of page if assigned. */
 } coremap_entry_t;
 
+typedef struct {
+	unsigned x;
+	list_t next;
+} list_t;
+
+static list_t*			fifolist;
 static unsigned long long	num_pagefault;		/* Statistics. */
 static page_table_entry_t	page_table[NPAGES];	/* OS data structure. */
 static coremap_entry_t		coremap[RAM_PAGES];	/* OS data structure. */
 static unsigned			memory[RAM_SIZE];	/* Hardware: RAM. */
 static unsigned			swap[SWAP_SIZE];	/* Hardware: disk. */
 static unsigned			(*replace)(void);	/* Page repl. alg. */
+
+list_t* make_list(){
+	list_t* l = (list_t*) malloc(sizeof(list_t));
+	l.x = 0;
+	l.next = 0;
+}
 
 unsigned make_instr(unsigned opcode, unsigned dest, unsigned s1, unsigned s2)
 {
@@ -141,9 +153,15 @@ static unsigned new_swap_page()
 
 static unsigned fifo_page_replace()
 {
-	int	page;
+	unsigned	page;
+	list_t*		f;
 	
-	page = INT_MAX; 
+	page = *fifolist.x; 
+	f = fifolist;	
+	fifolist = *fifolist.next;
+	free(f);
+	
+	// Ge tillbaka den som kom till swapen först
 
 	assert(page < RAM_PAGES);
 }
@@ -163,16 +181,24 @@ static unsigned take_phys_page()
 
 	page = (*replace)();
 
+
+	
+
 	return page;
 }
 
 static void pagefault(unsigned virt_page)
 {
 	unsigned		page;
-
 	num_pagefault += 1;
 
+	// Flytta minnet
+	
+	// Om finns i swap, flytta till minnet
 	page = take_phys_page();
+
+	// annars skapa ny page
+	
 }
 
 static void translate(unsigned virt_addr, unsigned* phys_addr, bool write)
