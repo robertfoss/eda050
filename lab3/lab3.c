@@ -283,7 +283,7 @@ int run(int argc, char** argv)
 	if (argc > 1)
 		file = argv[1];	
 	else
-		file = "a.s";
+		file = "fac.s";
 
 	read_program(file, memory, &ninstr);
 
