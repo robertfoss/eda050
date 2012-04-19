@@ -31,12 +31,12 @@ void usr2(int code) {
 
 int main(int argc, char** argv)
 {
-	int i;
-	sigset_t block_set;
+	int i = 0;
+/*	sigset_t block_set;*/
 	sigset_t received_set;
 
 	sigemptyset(&ss);
-//	sigaddset(&ss, SIGINT);
+/*	sigaddset(&ss, SIGINT);*/
 	newact.sa_mask = ss;	
 
 	proceed = 1;	
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 	
 	for(i=0; i < _NSIG-1; ++i)
 		if(sigismember(&received_set, i)) fprintf(stderr, "BLOCKED: SIG-%d\n", i );
-	//sigprocmask(SIG_UNBLOCK, &block_set, &received_set);
+/*	sigprocmask(SIG_UNBLOCK, &block_set, &received_set);*/
 
 
 	return 0;
