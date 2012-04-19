@@ -74,7 +74,6 @@ typedef struct {
 } coremap_entry_t;
 
 
-static int			corecounter = 0;
 static int			swapcounter = 0;
 static unsigned long long	num_pagefault;		/* Statistics. */
 static page_table_entry_t	page_table[NPAGES];	/* OS data structure. */
@@ -145,26 +144,8 @@ static unsigned new_swap_page()
 
 static unsigned fifo_page_replace()
 {
-	unsigned	page;
-	list_t*		f;
-
-	if(corecounter < RAM_PAGES){
-		coremap_entry_t* c = (coremap_entry_t*) malloc(sizeof(coremap_entry_t));
-		page = new_swap_page();
-		c->page = page;
-		c->owner = pagetable[c->page];
-		coremap[swapcounter] = c;
-		corecounter++;		
-	} else {
-		page = coremap[swapcounter].page; 
-	}
-	// Sätt i page_table_enty för coremap[page].owner att page nu finns i ram ist. för på disk.
-	
-	
 	swapcounter = (swapcounter+1)%RAM_PAGES;
-	// Ge tillbaka den som kom till swapen först
-
-	assert(page < RAM_PAGES);
+	return swapcounter;
 }
 
 static unsigned second_chance_replace()
@@ -174,31 +155,59 @@ static unsigned second_chance_replace()
 	page = INT_MAX; 
 
 	assert(page < RAM_PAGES);
+	return page;
 }
 
 static unsigned take_phys_page()
 {
-	unsigned		page;	/* Page to be replaced. */
+	unsigned		coreindex;	/* Page to be replaced. */
 
-	page = (*replace)();
+	coreindex = (*replace)();
 
+	coremap_entry_t* c = &coremap[coreindex];
+	page_table_entry_t* p = c->owner;
+	if(p != 0){
+		if(p->modified)
+			write_page(coreindex,c->page);
 
-	
-
-	return page;
+		p->page = c->page;
+		p->inmemory = 0;
+		p->modified = 0;
+		p->ondisk = 1;
+		printf("tpp:\tcm-page: %d\tpt:%d\n", c->page, p->page);
+	}
+	return coreindex;
 }
 
 static void pagefault(unsigned virt_page)
 {
-	unsigned		page;
+	unsigned		coreindex;
 	num_pagefault += 1;
 
-	// Flytta minnet
-	
-	// Om finns i swap, flytta till minnet
-	page = take_phys_page();
+	coreindex = take_phys_page();
 
-	// annars skapa ny page
+	coremap_entry_t* c = &coremap[coreindex];
+	page_table_entry_t* p = &page_table[virt_page];
+
+	unsigned temp;
+	if(!p->ondisk){
+		temp = new_swap_page();
+		printf("NEWSWAP %d\n", temp);
+	}else{
+		temp = p->page;
+		printf("ONDISK %d\n", temp);
+	}
+
+	c->owner = p;
+	c->page = temp;
+	
+	p->page = c->page;
+	p->inmemory = 1;
+	p->modified = 0;
+	p->ondisk = 1;
+	printf("pf:\tcm-page: %d\tpt:%d\n", c->page, p->page);
+	read_page(coreindex, p->page);
+	
 	
 }
 
