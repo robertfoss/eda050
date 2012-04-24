@@ -168,13 +168,13 @@ static unsigned take_phys_page()
 	page_table_entry_t* p = c->owner;
 	if(p != 0){
 		if(p->modified)
-			write_page(coreindex,c->page);
+			write_page(coreindex, c->page);
 
 		p->page = c->page;
 		p->inmemory = 0;
 		p->modified = 0;
 		p->ondisk = 1;
-		printf("tpp:\tcm-page: %d\tpt:%d\n", c->page, p->page);
+		printf("take_phys_page:\tcoremap#: %d\tpagetable#:%d\n", c->page, p->page);
 	}
 	return coreindex;
 }
@@ -205,7 +205,7 @@ static void pagefault(unsigned virt_page)
 	p->inmemory = 1;
 	p->modified = 0;
 	p->ondisk = 1;
-	printf("pf:\tcm-page: %d\tpt:%d\n", c->page, p->page);
+	printf("pagefault:\tcoremap#: %d\tpagetable#:%d\n", c->page, p->page);
 	read_page(coreindex, p->page);
 	
 	
@@ -219,6 +219,7 @@ static void translate(unsigned virt_addr, unsigned* phys_addr, bool write)
 	virt_page = virt_addr / PAGESIZE;
 	offset = virt_addr & (PAGESIZE - 1);
 
+        printf("translate:\tpagetable[%d]\n", virt_page);
 	if (!page_table[virt_page].inmemory)
 		pagefault(virt_page);
 
