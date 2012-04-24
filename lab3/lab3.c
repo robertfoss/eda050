@@ -14,6 +14,7 @@
 #define RAM_SIZE	(RAM_PAGES * PAGESIZE)
 #define SWAP_PAGES	(128)	
 #define SWAP_SIZE	(SWAP_PAGES * PAGESIZE)
+
 #undef DEBUG
 
 #define ADD	(0)
