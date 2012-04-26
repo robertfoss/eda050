@@ -149,14 +149,44 @@ static unsigned fifo_page_replace()
 	return swapcounter;
 }
 
+static int score_page(page_table_entry_t p){
+    if(!p.modified && !p.referenced)
+        return 4;
+    if(p.modified && !p.referenced)
+        return 3;
+    if(!p.modified && p.referenced)
+        return 2;
+    if(p.modified && p.referenced)
+        return 1;
+    return -1;
+}
+
 static unsigned second_chance_replace()
 {
-	int	page;
-	
-	page = INT_MAX; 
+    int page = (swapcounter+1) % RAM_PAGES;
+	//page_table_entry_t best_p;
+	page_table_entry_t p;
+    for(int i = (swapcounter+2) % RAM_PAGES; i != swapcounter; i = (i +1) % RAM_PAGES){
+        p = page_table[coremap[i].page];
+        if(p.referenced)
+            p.referenced = 0;
+        else if(score_page(p) > score_page(page_table[coremap[page].page]))
+            page = i;
+    }
+    
+
+    for(int i = (swapcounter+2) % RAM_PAGES; i != swapcounter; i = (i + 1) % RAM_PAGES){
+        p = page_table[coremap[i].page];
+        if(score_page(p) > score_page(page_table[coremap[page].page]))
+            page = i;
+    }
+/*
+    if(page != 0)
+        exit(1);*/
+    swapcounter = page;
 
 	assert(page < RAM_PAGES);
-	return page;
+    return page;
 }
 
 static unsigned take_phys_page()
@@ -193,22 +223,22 @@ static void pagefault(unsigned virt_page)
 	unsigned temp;
 	if(!p->ondisk){
 		temp = new_swap_page();
-		printf("NEWSWAP %d\n", temp);
+		//printf("NEWSWAP %d\n", temp);
 	}else{
 		temp = p->page;
-		printf("ONDISK %d\n", temp);
+		//printf("ONDISK %d\n", temp);
 	}
 
 	c->owner = p;
 	c->page = temp;
 	
-	p->page = c->page;
+	p->page = coreindex;
 	p->inmemory = 1;
 	p->modified = 0;
 	p->ondisk = 1;
-	printf("pagefault:\tcoremap#: %d\tpagetable#:%d\n", c->page, p->page);
-	read_page(coreindex, p->page);
-	
+	printf("pagefault:\tcoremap#: %d\tpagetable#:%d\n", coreindex, p->page);
+	read_page(coreindex, c->page);
+	printf("pagefault\n");
 	
 }
 
@@ -220,7 +250,7 @@ static void translate(unsigned virt_addr, unsigned* phys_addr, bool write)
 	virt_page = virt_addr / PAGESIZE;
 	offset = virt_addr & (PAGESIZE - 1);
 
-        printf("translate:\tpagetable[%d]\n", virt_page);
+    printf("translate:\tpagetable[%d]\n", virt_page);
 	if (!page_table[virt_page].inmemory)
 		pagefault(virt_page);
 
@@ -497,7 +527,7 @@ int run(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-#if 1
+#if 0
 	replace = fifo_page_replace;
 #else
 	replace = second_chance_replace;
