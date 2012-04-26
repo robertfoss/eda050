@@ -1,0 +1,4 @@
+for x in $1
+do
+chmod +x $x
+done
