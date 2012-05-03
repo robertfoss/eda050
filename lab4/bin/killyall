@@ -1,0 +1,1 @@
+ps x | grep $1 | grep -v grep | cut -d' ' -f1 | xargs kill -9

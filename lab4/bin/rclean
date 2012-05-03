@@ -1,0 +1,6 @@
+clean
+for file in *; do
+   if [ -d $file ]; then
+      cd $file && rclean 
+   fi
+done
